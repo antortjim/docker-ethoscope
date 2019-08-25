@@ -65,9 +65,10 @@ RUN cd /opt/ethoscope-git/node_src && pip install -e .
 RUN ln -s /opt/ethoscope-git/scripts/ethoscope_updater /opt/ethoscope_updater
 
 RUN cd /opt/ethoscope-git/scripts && cp ./ethoscope_node.service /etc/systemd/system/ethoscope_node.service && cp ./ethoscope_backup.service /etc/systemd/system/ethoscope_backup.service && cp ./ethoscope_video_backup.service /etc/systemd/system/ethoscope_video_backup.service
-RUN cd /etc/systemd/system && sed -i 's/ethoscope-node/ethoscope-git/' ethoscope_*.service 
 
 RUN cd /opt/ethoscope_updater && cp ethoscope_update_node.service /etc/systemd/system/ethoscope_update_node.service
+
+RUN cd /etc/systemd/system && sed -i 's/ethoscope-node/ethoscope-git/' ethoscope_*.service 
 
 RUN pacman -Sy --noconfirm vim
 
@@ -76,6 +77,7 @@ RUN printf "#! /bin/bash\n\nsystemctl enable sshd.service\nsystemctl start sshd.
 RUN chmod +x /root/services.sh
 
 EXPOSE 80
+EXPOSE 8888
 
 
 ENV init /lib/systemd/systemd
