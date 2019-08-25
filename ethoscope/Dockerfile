@@ -60,7 +60,14 @@ RUN cd /opt/ethoscope-git && git branch && git checkout python3.7
 #
 ## we install with pip
 RUN cd /opt/ethoscope-git/node_src && pip install -e .
-##
+
+
+# ethoscope dependencies not installed by pip
+RUN pacman -S --noconfirm hdf5 opencv
+RUN pacman -S --noconfirm gtk3
+RUN pip install h5py==2.6.0
+RUN cd /opt/ethoscope-git/src && pip install -e .
+
 ### we create a symbolic link of the updated in the proper location
 RUN ln -s /opt/ethoscope-git/scripts/ethoscope_updater /opt/ethoscope_updater
 
@@ -78,6 +85,7 @@ RUN chmod +x /root/services.sh
 
 EXPOSE 80
 EXPOSE 8888
+EXPOSE 9000
 
 
 ENV init /lib/systemd/systemd
