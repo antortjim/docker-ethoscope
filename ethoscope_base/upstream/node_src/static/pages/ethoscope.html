@@ -1,0 +1,386 @@
+<!-- home.html -->
+    <div class="jumbotron text-center" ng-cloak>
+
+        <div class="header">
+          <h1>{{device.name}}</h1>
+          <ul>
+            <li title="Device IP address"><a href="ssh://alarm@{{device.ip}}">{{device.ip}}</a></li>
+<!--                The default SSH password for ethoscopes is alarm
+                    The default root password is root
+                    To associate the xdg protocol to SSH run the following in a terminal on the client computer:
+
+                    xdg-mime default ssh.desktop x-scheme-handler/ssh
+                    cat << EOF > ~/.local/share/applications/ssh.desktop
+                    [Desktop Entry]
+                    Version=1.0
+                    Name=SSH Launcher
+                    Exec=bash -c '(URL="%U" HOST="\${URL:6}"; ssh \$HOST); bash'
+                    Terminal=true
+                    Type=Application
+                    Icon=utilities-terminal
+                    EOF
+-->
+
+            <li ng-if="delta_t_min <= 3" title="Current time on the device">{{device_datetime}}</li>
+            <li ng-if="delta_t_min > 3" title="There is more than 3 minutes difference between node and this device" style="color: #FF431F;"><span class="fa fa-warning"></span>{{device_datetime}}</li>
+
+            <li ng-if="device.status == 'stopped'">Last used on {{ethoscope.start_date_time(device.time)}}</li>
+            <li ng-if="device.status == 'not_in_use'">Last seen on {{ethoscope.start_date_time(device.time)}}</li>
+            <li ng-if="device.status == 'running' || device.status == 'recording'">Last backup {{ethoscope.elapsedtime(device.time_since_backup)}}</li>
+            </ul>
+        </div>
+
+        <div ng-if="device.status == 'running' || device.status == 'recording'" >
+        <div id="node-info" class="intro">
+            <p><span class="fa fa-clock-o"></span> Running since {{ethoscope.start_date_time(device.time)}}
+                (i.e. {{ethoscope.elapsedtime(device.monitor_info.last_time_stamp)}} ago)
+                <br>
+                <span class="fa fa-user"></span> User: {{device.experimental_info.name}}
+                <br>
+                <span class="fa fa-map-marker"></span> Location: {{device.experimental_info.location}}
+                <br>
+                <span ng-if="device.status == 'running'" class="fa fa-tachometer"></span> {{device.monitor_info.fps}} FPS
+            </p>
+
+        </div>
+        </div>
+
+        <div ng-if="device.status == 'running'">
+            <p>Your file will be saved as: <a href="/download{{device.backup_path}}" target="_blank" data-toggle="tooltip" data-placement="top" title="{{device.backup_path}}">{{ethoscope.readable_url(device.backup_path)}}</a></p>
+        </div>
+
+        <div id="starting" class="spinner" >
+        </div>
+    </div>
+   
+    <div class= "last_drawn_img">
+        <img ng-if="device.status == 'running' || device.status == 'recording'"  ng-src="{{device.url_img}}" alt="" width="640"></img>
+        <img ng-if="device.status == 'streaming'"  ng-src="{{device.url_stream}}" alt="" width=""></img>
+    </div>
+
+    <div class="jumbotron text-center">
+
+        <div ng-if="device.status == 'initializating'">
+            <p>Please wait, system is starting</p>
+        </div>
+        <div ng-if="device.status == 'stopping'">
+            <p>Stopping tracking...</p>
+        </div>
+    
+        <div ng-if="device.status != 'not_in_use'">
+
+            <!-- Dropdown Button for Tracking actions -->
+            <label class="dropdown" ng-if="device.status == 'stopped'" >
+              <div class="dd-button" id="tracking-btn" ng-class="{'disabled':!isActive}" >
+                Track
+              </div>
+              <input type="checkbox" class="dd-input" id="track-drop" ng-disabled="!isActive">
+              <ul class="dd-menu">
+                <li ng-class="{'disabled':!isActive}" data-toggle="{{isActive ? 'modal' : ''}}" data-target="#startModal">Start Tracking</li>
+                <li class="disabled">New Mask</li>
+              </ul>
+            </label>
+
+            <!-- Dropdown Button for Video actions -->
+            <label class="dropdown" ng-if="device.status == 'stopped'" >
+              <div class="dd-button" id="video-btn" ng-class="{'disabled':!isActive}" >
+                Video
+              </div>
+              <input type="checkbox" class="dd-input" id="video-drop" ng-disabled="!isActive">
+              <ul class="dd-menu">
+                <li ng-class="{'disabled':!isActive}" data-toggle="{{isActive ? 'modal' : ''}}" data-target="#recordModal">Record Video</li>
+                <li ng-class="{'disabled':!can_stream || !isActive}" ng-click="!can_stream || !isActive || ethoscope.stream()">Start Streaming</li>
+              </ul>
+            </label>
+
+            <!-- Dropdown Button for Options -->
+            <label class="dropdown" ng-if="device.status == 'stopped'">
+              <div class="dd-button" id="options-btn">
+                Options
+              </div>
+              <input type="checkbox" class="dd-input" id="options-drop">
+              <ul class="dd-menu">
+                <li ng-click="ethoscope.log()">Logs</li>
+                <li data-toggle="modal" data-target="#changeInfo">Settings</li>
+                <li ng-click="ethoscope.backup()">Backup</li>
+              </ul>
+            </label>
+
+            <!-- Dropdown Button for Power actions -->
+            <label class="dropdown" ng-if="device.status == 'stopped'">
+              <div class="dd-button" id="power-btn">
+                Power
+              </div>
+              <input type="checkbox" class="dd-input" id="options-drop">
+              <ul class="dd-menu">
+                <li data-toggle="modal" data-target="#powerOffAlert">Shutdown</li>
+                <li data-toggle="modal" data-target="#rebootAlert">Reboot</li>
+              </ul>
+            </label>
+
+            <!-- Stop Buttons / visible only when device is active -->
+            <div class="stop-button">
+                <button class="btn btn-danger" ng-if="device.status == 'running' || device.status == 'recording' || device.status == 'streaming'" data-toggle="modal" data-target="#stopTrackingModal">Stop</button>
+                <button class="btn btn-info disable" ng-if="device.status == 'stopping'" ng-click="ethoscope.alert('Please wait, system is stopping')">Stopping</button>
+                <button class="btn btn-danger disable" ng-if="device.status == 'initialising'"  ng-click="ethoscope.alert('Please wait, system is starting')">Starting</button>
+            </div>
+
+        </div>
+    </div>
+    
+    <div id = "error" class="alert alert-danger text-center" ng-if="device.error">
+        <p>Sorry there has been an error: {{device.error}}</p>
+         <!--<img  ng-src="{{device.ip}}:9000/static{{device.dbg_img}}?{{device.time}}" alt="No Debug Image" ng-if="device.dbg_img != null" width="480">-->
+         <img  ng-src="/device/{{device.id}}/dbg_img?{{device.time}}" alt="No Debug Image" ng-if="device.dbg_img != null" width="480">
+    </div>
+
+    <div ng-if="showLog == true">
+        <pre>
+        <p class="log" ng-repeat="(key,entry) in log | toArray |orderBy: 'key'">{{key}}: {{entry}}</p></pre>
+    </div>
+
+<!-- Modal power off -->
+<div class="modal fade" id="powerOffAlert" tabindex="-1" role="dialog" aria-labelledby="powerOffAlertLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Powering Off!</h4>
+      </div>
+      <div class="modal-body">
+       <p>Do you really want to power off the device “{{device.name}}”? Any ongoing acquisition will be ended.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+        <button type="button" class="btn btn-primary" ng-click="ethoscope.poweroff()" data-dismiss="modal">Yes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Reboot -->
+<div class="modal fade" id="rebootAlert" tabindex="-1" role="dialog" aria-labelledby="rebootAlertLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Rebooting</h4>
+      </div>
+      <div class="modal-body">
+       <p>Do you really want to reboot the device “{{device.name}}”? Any ongoing acquisition will be ended.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+        <button type="button" class="btn btn-primary" ng-click="ethoscope.reboot()" data-dismiss="modal">Yes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal download -->
+<div class="modal fade" id="downloadModal" tabindex="-1" role="dialog" aria-labelledby="downloadModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="downloadModalLabel">Download Data</h4>
+      </div>
+      <div class="modal-body">
+          {{device}}
+       <a ng-repeat="file in device.monitor_info.result_files" href="/download{{file}}" target="_blank">Device: {{file}}</a>
+          <a ng-repeat="file in device.monitor_info.result_files" href="/download{{file}}" target="_blank">Node: {{file}}</a>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" ng-click="ethoscope.poweroff()">Download All</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal start tracking -->
+<div class="modal fade" id="startModal" tabindex="-1" role="dialog" aria-labelledby="startModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h3 class="modal-title" id="startModalLabel">Select tracking type</h3>
+      </div>
+      <div class="modal-body">
+          <form name="trackingoptionsform" class="input">
+          <div id="user_options" ng-repeat="(name, option) in user_options.tracking">
+            <h4>{{name}}</h4>
+              <ul class="option-list">
+                <li ng-repeat="opt in option">
+                    <input type=radio name={{opt.name}} value={{opt.name}} ng-model="selected_options.tracking[name]['name']" ng-click="ethoscope.update_user_options.tracking(name)">
+                    <strong data-toggle="tooltip" data-placement="top" title=" {{opt.overview}}" ng-init="description[opt.name] = false">{{opt.name}}</strong> <a href=""  ng-click="description[opt.name] = true" ng-if="description[opt.name]==false"> <icon class="fa fa-plus-square-o"> </icon></a>
+                    <a href="" ng-click="description[opt.name] = false" ng-if="description[opt.name]==true"> <icon class="fa fa-minus-square-o"> </icon></a>
+                    <div ng-if="description[opt.name] == true">
+                        {{opt.overview}}
+                    </div>
+                  <ul ng-if="selected_options.tracking[name]['name']==opt.name">
+                        <li  ng-repeat="arg in opt.arguments">
+                            <label for="input-{{arg.name}}">{{arg.description}}</label>
+
+                            
+                            <select ng-if="arg.type == 'filepath'" id="input-{{arg.name}}" name={{arg.name}} ng-model="selected_options.tracking[name]['arguments'][arg.name]" > <option value="">Available Movies</option><option ng-repeat="entry in videofiles" value="{{entry.fullpath}}">{{entry.filename | limitTo: 40}}{{entry.filename.length < 40 ? '' : '...'}}</option> </select>
+                            <input  ng-if="arg.type == 'number'"   id="input-{{arg.name}}" type=number name={{arg.name}} min={{arg.min}} max={{arg.max}} step={{arg.step}}  ng-model="selected_options.tracking[name]['arguments'][arg.name]" >
+                            <input  ng-if="(arg.type == 'str' && arg.asknode == undefined)" id="input-{{arg.name}}" type=text name={{arg.name}}  ng-model="selected_options.tracking[name]['arguments'][arg.name]"  >
+                            <select ng-if="(arg.type == 'str' && arg.asknode != undefined)" id="input-{{arg.name}}" name={{arg.name}} ng-model="selected_options.tracking[name]['arguments'][arg.name]"> <option ng-repeat="entry in node[arg.asknode]  | orderBy: 'name' " ng-if="entry.active" value="{{entry.name}}">{{entry.name}}</option> </select>
+
+                            <div ng-if="arg.type == 'date_range'" class="input-group">
+                                <input ng-if="arg.type == 'date_range'" date-range-picker class="form-control date-picker" name={{arg.name}} id="input-drp" type=hidden readonly ng-model="selected_options.tracking[name]['arguments'][arg.name]" options="{timePicker: true, timePicker24Hour : true, timePickerIncrement: 30, drops: up , autoApply : true , autoUpdateInput : true, locale: { format: 'YYYY-MM-DD HH:mm:ss', separator : ' > ' }}" > 
+                                <input ng-if="arg.type == 'date_range'" class="form-control" type=text  ng-model="selected_options.tracking[name]['arguments'][arg.name].formatted" > 
+                                <span class="input-group-addon"><i class="glyphicon glyphicon-calendar" onclick="$('#input-drp').data('daterangepicker').show();"></i></span>
+                            </div>
+
+                            <div ng-if="arg.type == 'datetime'" class="input-group">
+                                <input ng-if="arg.type == 'datetime'" date-range-picker class="form-control date-picker" name={{arg.name}} id="input-{{arg.name}}" type=text  ng-model="selected_options.tracking[name]['arguments'][arg.name]" options="{singleDatePicker: true, timePicker: true, timePicker24Hour : true, timePickerIncrement: 30, drops: up , autoApply : true , autoUpdateInput : true, locale: { format: 'YYYY-MM-DD HH:mm:ss' }}" > 
+                                <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
+                            </div>
+
+
+                        </li>
+                    </ul>
+                </li>
+              </ul>
+              <hr>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" ng-if="device.status == 'stopped'">Cancel</button>
+        <button type="button" class="btn btn-primary" ng-if="device.status == 'stopped'" ng-click="ethoscope.start_tracking(selected_options.tracking)" data-toggle="modal">Start Tracking</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Change Machine Info -->
+<div class="modal fade" id="changeInfo" tabindex="-1" role="dialog" aria-labelledby="changeInfo" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h3 class="modal-title" id="recordModalLabel">Machine Information</h3>
+      </div>
+      <div class="modal-body">
+          <form name="machineinfoform" class="input">
+          <div id="user_options" ng-repeat="(name,option) in user_options.update_machine">
+<!--            <h4>{{name}}</h4> -->
+              <ul class="option-list">
+                <li ng-repeat="opt in option">
+                    <input type=radio name={{opt.name}} value={{opt.name}} ng-model="selected_options.update_machine[name]['name']" ng-click="ethoscope.update_user_options.update_machine(name)">
+                    <strong data-toggle="tooltip" data-placement="top" title=" {{opt.overview}}" ng-init="description[opt.name] = false">{{opt.name}}</strong> <a href=""  ng-click="description[opt.name] = true" ng-if="description[opt.name]==false"> <icon class="fa fa-plus-square-o"> </icon></a>
+                    <a href="" ng-click="description[opt.name] = false" ng-if="description[opt.name]==true"> <icon class="fa fa-minus-square-o"> </icon></a>
+                    <div ng-if="description[opt.name] == true">
+                        {{opt.overview}}
+                    </div>
+                  <ul ng-if="selected_options.update_machine[name]['name']==opt.name">
+                        <li  ng-repeat="arg in opt.arguments">
+                            <label for="input-{{arg.name}}">{{arg.description}}</label>
+                            
+                            <input ng-if="arg.type == 'filepath'" id="input-{{arg.name}}" type=file name={{arg.name}}  ng-model="selected_options.update_machine[name]['arguments'][arg.name]"  >
+                            <input ng-if="arg.type == 'number'" id="input-{{arg.name}}" type=number name={{arg.name}} min={{arg.min}} max={{arg.max}} step={{arg.step}}  ng-model="selected_options.update_machine[name]['arguments'][arg.name]" >
+                            <input ng-if="arg.type == 'str'" id="input-{{arg.name}}" type=text name={{arg.name}}  ng-model="selected_options.update_machine[name]['arguments'][arg.name]"  >
+
+                            <div ng-if="arg.type == 'date_range'" class="input-group">
+                                <input ng-if="arg.type == 'date_range'" date-range-picker class="form-control date-picker" id="input-{{arg.name}}" type=text name={{arg.name}} ng-model="selected_options.update_machine[name]['arguments'][arg.name]" options="{timePicker: true, timePicker24Hour : true, timePickerIncrement: 30, drops: up , autoApply : true , autoUpdateInput : true, locale: { format: 'YYYY-MM-DD HH:mm:ss', separator : ' > ' }}" > 
+                                <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
+                            </div>
+
+                            <div ng-if="arg.type == 'datetime'" class="input-group">
+                                <input ng-if="arg.type == 'datetime'" date-range-picker class="form-control date-picker" id="input-{{arg.name}}" type=text name={{arg.name}} ng-model="selected_options.update_machine[name]['arguments'][arg.name]" options="{singleDatePicker: true, timePicker: true, timePicker24Hour : true, timePickerIncrement: 30, drops: up , autoApply : true , autoUpdateInput : true, locale: { format: 'YYYY-MM-DD HH:mm:ss' }}" > 
+                                <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
+                            </div>
+
+                        </li>
+                    </ul>
+                </li>
+              </ul>
+              <hr>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" ng-if="device.status == 'stopped'">Cancel</button>
+        <button type="button" class="btn btn-primary" ng-if="device.status == 'stopped'" ng-click="ethoscope.update_machine(selected_options.update_machine)" data-toggle="modal">Update</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal start recording -->
+<div class="modal fade" id="recordModal" tabindex="-1" role="dialog" aria-labelledby="recordModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h3 class="modal-title" id="recordModalLabel">Select recording type</h3>
+      </div>
+      <div class="modal-body">
+          <form name="recordingoptionsform" class="input">
+          <div id="user_options" ng-repeat="(name,option) in user_options.recording">
+            <h4>{{name}}</h4>
+              <ul class="option-list">
+                <li ng-repeat="opt in option">
+                    <input type=radio name={{opt.name}} value={{opt.name}} ng-model="selected_options.recording[name]['name']" ng-click="ethoscope.update_user_options.recording(name)">
+                    <strong data-toggle="tooltip" data-placement="top" title=" {{opt.overview}}" ng-init="description[opt.name] = false">{{opt.name}}</strong> <a href=""  ng-click="description[opt.name] = true" ng-if="description[opt.name]==false"> <icon class="fa fa-plus-square-o"> </icon></a>
+                    <a href="" ng-click="description[opt.name] = false" ng-if="description[opt.name]==true"> <icon class="fa fa-minus-square-o"> </icon></a>
+                    <div ng-if="description[opt.name] == true">
+                        {{opt.overview}}
+                    </div>
+                  <ul ng-if="selected_options.recording[name]['name']==opt.name">
+                        <li  ng-repeat="arg in opt.arguments">
+                            <label for="input-{{arg.name}}">{{arg.description}}</label>
+                            
+                            <input ng-if="arg.type == 'filepath'" id="input-{{arg.name}}" type=file name={{arg.name}}  ng-model="selected_options.recording[name]['arguments'][arg.name]"  >
+                            <input ng-if="arg.type == 'number'" id="input-{{arg.name}}" type=number name={{arg.name}} min={{arg.min}} max={{arg.max}} step={{arg.step}}  ng-model="selected_options.recording[name]['arguments'][arg.name]" >
+                            <input  ng-if="(arg.type == 'str' && arg.asknode == undefined)" id="input-{{arg.name}}" type=text name={{arg.name}}  ng-model="selected_options.recording[name]['arguments'][arg.name]"  >
+                            <select ng-if="(arg.type == 'str' && arg.asknode != undefined)" id="input-{{arg.name}}" name={{arg.name}} ng-model="selected_options.recording[name]['arguments'][arg.name]"> <option ng-repeat="entry in node[arg.asknode] | orderBy: 'name' " ng-if="entry.active" value="{{entry.name}}">{{entry.name}}</option> </select>
+
+                            <div ng-if="arg.type == 'date_range'" class="input-group">
+                                <input ng-if="arg.type == 'date_range'" date-range-picker class="form-control date-picker" id="input-{{arg.name}}" type=text name={{arg.name}} ng-model="selected_options.recording[name]['arguments'][arg.name]" options="{timePicker: true, timePicker24Hour : true, timePickerIncrement: 30, drops: up , autoApply : true , autoUpdateInput : true, locale: { format: 'YYYY-MM-DD HH:mm:ss', separator : ' > ' }}" > 
+                                <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
+                            </div>
+
+                            <div ng-if="arg.type == 'datetime'" class="input-group">
+                                <input ng-if="arg.type == 'datetime'" date-range-picker class="form-control date-picker" id="input-{{arg.name}}" type=text name={{arg.name}} ng-model="selected_options.recording[name]['arguments'][arg.name]" options="{singleDatePicker: true, timePicker: true, timePicker24Hour : true, timePickerIncrement: 30, drops: up , autoApply : true , autoUpdateInput : true, locale: { format: 'YYYY-MM-DD HH:mm:ss' }}" > 
+                                <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
+                            </div>
+
+                        </li>
+                    </ul>
+                </li>
+              </ul>
+              <hr>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" ng-if="device.status == 'stopped'">Cancel</button>
+        <button type="button" class="btn btn-primary" ng-if="device.status == 'stopped'" ng-click="ethoscope.start_recording(selected_options.recording)" data-toggle="modal">Start recording</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal stop tracking /recording-->
+<div class="modal fade" id="stopTrackingModal" tabindex="-1" role="dialog" aria-labelledby="stopTrackingModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Stopping</h4>
+      </div>
+      <div class="modal-body">
+       <p>Do you really want to stop the tracking in “{{device.name}}”? Any ongoing acquisition will be ended.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+        <button type="button" class="btn btn-primary" ng-click="ethoscope.stop()" data-dismiss="modal">Yes, of course!</button>
+      </div>
+    </div>
+  </div>
+</div>
