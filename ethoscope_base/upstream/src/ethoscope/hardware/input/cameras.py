@@ -125,7 +125,7 @@ class MovieVirtualCamera(BaseCamera):
                                    ]}
                                    
 
-    def __init__(self, path, use_wall_clock = False, *args, **kwargs ):
+    def __init__(self, path="/ethoscope_data/upload/video/movie.mp4", use_wall_clock = False, *args, **kwargs ):
         """
         Class to acquire frames from a video file.
 

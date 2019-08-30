@@ -10,8 +10,6 @@ LABEL maintainer "Antonio Ortega <antonio.ortega@kuleuven.vib.be>"
 RUN mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
 
 # mysql credentials
-ARG USER_NAME=ethoscope
-ARG PASSWORD=ethoscope
 # where ethoscope saves temporary local files (e.g. videos)
 ARG TARGET_GIT_INSTALL=/opt/ethoscope-git
 #ARG UPSTREAM_GIT_REPO=https://github.com/gilestrolab/ethoscope.git
@@ -47,6 +45,12 @@ EXPOSE 9000
 # Copy the startup script executed with docker exec right after docker run
 # This script cannot be passed as ENTRYPOINT because systemd must be for the services to work
 COPY startup.sh /root/
+
+# Copy some videos
+ARG VIDEO_FOLDER=/ethoscope_data/upload/video/
+RUN mkdir -p $VIDEO_FOLDER
+COPY videos/*.mp4 $VIDEO_FOLDER/movie.mp4
+
 
 ENV init /lib/systemd/systemd
 VOLUME [ "/sys/fs/cgroup" ]
