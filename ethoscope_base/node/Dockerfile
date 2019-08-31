@@ -17,10 +17,5 @@ EXPOSE 8888
 
 # Copy the startup script executed with docker exec right after docker run
 # This script cannot be passed as ENTRYPOINT because systemd must be for the services to work
-COPY startup.sh /root/
-RUN chmod +x /root/startup.sh
-
-#ENV init /lib/systemd/systemd
-#VOLUME [ "/sys/fs/cgroup" ]
-#ENTRYPOINT ["/lib/systemd/systemd"]
-ENTRYPOINT ["/root/startup.sh"]
+COPY *.sh /root/
+RUN chmod +x /root/*.sh
