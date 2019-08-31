@@ -22,7 +22,7 @@ sleep 30
 
 echo "Running node container"
 #docker run -dP --rm  --net ethoscope-net --name node  node
-docker run -dP --rm  --net ethoscope-net --entrypoint /root/start_server.sh --name node_backup  node
+docker run -dP --rm  --net ethoscope-net --entrypoint /root/start_server.sh --name node_server  node
 docker run -dP --rm  --net ethoscope-net --entrypoint /root/start_backup.sh --name node_backup  node
 
 
