@@ -11,10 +11,6 @@ LABEL maintainer "Antonio Ortega <antonio.ortega@kuleuven.vib.be>"
 #RUN pip install h5py==2.6.0
 RUN cd /opt/ethoscope-git/node_src && pip install -e .
 
-# Expose port 80 for the ethoscope_node service and 8888 for the updater
-EXPOSE 80
-EXPOSE 8888
-
 # Copy the startup script executed with docker exec right after docker run
 # This script cannot be passed as ENTRYPOINT because systemd must be for the services to work
 COPY *.sh /root/

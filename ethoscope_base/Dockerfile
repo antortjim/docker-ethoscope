@@ -77,6 +77,7 @@ ARG TARGET_GIT_INSTALL=/opt/ethoscope-git
 
 #COPY $UPSTREAM_GIT_REPO_HOST  $UPSTREAM_GIT_REPO
 RUN mkdir -p /srv/git
+RUN sleep 0.3
 ## Clone the git repo in the /srv/git dir as bare
 RUN git clone --bare $UPSTREAM_GIT_REPO $LOCAL_BARE_PATH
 

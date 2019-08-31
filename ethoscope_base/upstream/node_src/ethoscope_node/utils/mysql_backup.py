@@ -35,7 +35,12 @@ class MySQLdbToSQlite(object):
 
         """
 
-        self._remote_host = remote_host
+        docker_container = os.environ.get("DOCKER_CONTAINER")
+        if docker_container:
+            self._remote_host = "mysqld"
+        else:
+            self._remote_host = remote_host
+        
         self._remote_user = remote_user
         self._remote_pass = remote_pass
         self._remote_db_name = remote_db_name

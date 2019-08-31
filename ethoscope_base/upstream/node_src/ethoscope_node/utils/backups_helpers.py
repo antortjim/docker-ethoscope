@@ -24,7 +24,7 @@ class BackupClass(object):
         if docker_container:
             self._database_ip="mysqld"
         else:
-           self._database_ip = os.path.basename(self._device_info["ip"])
+            self._database_ip = os.path.basename(self._device_info["ip"])
         self._results_dir = results_dir
 
     def run(self):

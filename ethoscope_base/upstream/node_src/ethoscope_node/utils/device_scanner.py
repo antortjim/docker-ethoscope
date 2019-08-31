@@ -434,7 +434,7 @@ class Device(Thread):
             device_name = self._info["name"]
             com = "SELECT value from METADATA WHERE field = 'date_time'"
 
-            docker_container = os.environ.get("DOCKER CONTAINER", False)
+            docker_container = os.environ.get("DOCKER_CONTAINER", False)
             if docker_container:
                 ip = "mysqld"
             else:
