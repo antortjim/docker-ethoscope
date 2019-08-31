@@ -8,6 +8,12 @@ import cv2
 import tempfile
 import os
 
+docker_container = os.environ.get('DOCKER_CONTAINER', False)
+if docker_container:
+    host="mysqld"
+else:
+    host = "localhost"
+
 
 class AsyncMySQLWriter(multiprocessing.Process):
 
@@ -28,7 +34,7 @@ class AsyncMySQLWriter(multiprocessing.Process):
     def _delete_my_sql_db(self):
         import mysql.connector
         try:
-            db = mysql.connector.connect(host="localhost",
+            db = mysql.connector.connect(host=host,
                                          user=self._db_user_name,
                                          passwd=self._db_user_pass,
                                          db=self._db_name,
@@ -74,7 +80,7 @@ class AsyncMySQLWriter(multiprocessing.Process):
 
     def _create_mysql_db(self):
         import mysql.connector
-        db = mysql.connector.connect(host="localhost",
+        db = mysql.connector.connect(host=host,
                                      user=self._db_user_name,
                                      passwd=self._db_user_pass,
                                      buffered=True)
@@ -95,7 +101,7 @@ class AsyncMySQLWriter(multiprocessing.Process):
 
     def _get_connection(self):
         import mysql.connector
-        db = mysql.connector.connect(host="localhost",
+        db = mysql.connector.connect(host=host,
                                      user=self._db_user_name,
                                      passwd=self._db_user_pass,
                                      db=self._db_name,

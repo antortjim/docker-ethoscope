@@ -50,8 +50,9 @@ COPY startup.sh /root/
 ARG VIDEO_FOLDER=/ethoscope_data/upload/video/
 RUN mkdir -p $VIDEO_FOLDER
 COPY videos/*.mp4 $VIDEO_FOLDER/movie.mp4
+RUN chmod +x /root/startup.sh
 
-
-ENV init /lib/systemd/systemd
-VOLUME [ "/sys/fs/cgroup" ]
-ENTRYPOINT ["/lib/systemd/systemd"]
+#ENV init /lib/systemd/systemd
+#VOLUME [ "/sys/fs/cgroup" ]
+#ENTRYPOINT ["/lib/systemd/systemd"]
+ENTRYPOINT ["/root/startup.sh"]

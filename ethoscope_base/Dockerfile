@@ -88,22 +88,26 @@ RUN cd $TARGET_GIT_INSTALL &&  git checkout python3.7 && git pull origin python3
 ### we create a symbolic link of the updated in the proper location
 RUN ln -s $TARGET_GIT_INSTALL/scripts/ethoscope_updater $TARGET_UPDATER_DIR
 
-## Copy the node services
-RUN cd $TARGET_GIT_INSTALL/scripts && cp ./ethoscope_node.service /etc/systemd/system/ethoscope_node.service && cp ./ethoscope_backup.service /etc/systemd/system/ethoscope_backup.service && cp ./ethoscope_video_backup.service /etc/systemd/system/ethoscope_video_backup.service
+### Copy the node services
+#RUN cd $TARGET_GIT_INSTALL/scripts && cp ./ethoscope_node.service /etc/systemd/system/ethoscope_node.service && cp ./ethoscope_backup.service /etc/systemd/system/ethoscope_backup.service && cp ./ethoscope_video_backup.service /etc/systemd/system/ethoscope_video_backup.service
+#
+### Copy the device service
+#RUN cp $TARGET_GIT_INSTALL/scripts/ethoscope_device.service /etc/systemd/system/ethoscope_device.service
+#
+### Copy the node update service
+#RUN cd $TARGET_UPDATER_DIR && cp ethoscope_update_node.service /etc/systemd/system/ethoscope_update_node.service
+#
+### Copy the device update service
+#RUN cd $TARGET_GIT_INSTALL/$UPDATER_LOCATION_IN_GIT && cp ethoscope_update.service /etc/systemd/system/ethoscope_update.service
+#
+### Make sure the services refer to the source folder as ethoscope-git
+#RUN cd /etc/systemd/system && sed -i 's/ethoscope-node/ethoscope-git/' ethoscope_*.service && sed -i 's/ethoscope-device/ethoscope-git/' ethoscope_*.service
 
-## Copy the device service
-RUN cp $TARGET_GIT_INSTALL/scripts/ethoscope_device.service /etc/systemd/system/ethoscope_device.service
+ENV DOCKER_CONTAINER Yes
 
-## Copy the node update service
-RUN cd $TARGET_UPDATER_DIR && cp ethoscope_update_node.service /etc/systemd/system/ethoscope_update_node.service
 
-## Copy the device update service
-RUN cd $TARGET_GIT_INSTALL/$UPDATER_LOCATION_IN_GIT && cp ethoscope_update.service /etc/systemd/system/ethoscope_update.service
-
-## Make sure the services refer to the source folder as ethoscope-git
-RUN cd /etc/systemd/system && sed -i 's/ethoscope-node/ethoscope-git/' ethoscope_*.service && sed -i 's/ethoscope-device/ethoscope-git/' ethoscope_*.service
-
-ENV init /lib/systemd/systemd
-VOLUME [ "/sys/fs/cgroup" ]
-ENTRYPOINT ["/lib/systemd/systemd"]
+#ENV init /lib/systemd/systemd
+#VOLUME [ "/sys/fs/cgroup" ]
+#ENTRYPOINT ["/lib/systemd/systemd"]
+ENTRYPOINT ["sleep", "6000"]
 

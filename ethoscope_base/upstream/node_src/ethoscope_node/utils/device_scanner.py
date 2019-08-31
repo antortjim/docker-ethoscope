@@ -565,7 +565,6 @@ class DeviceScanner(object):
         
         try:
             info = zeroconf.get_service_info(type, name)
-            logger.debug(info)
             # Note that I don't trust the address given in the info. When registering, the
             # service doesn't know which interface it will be accessed by and hence which IP
             # address to use (src/scripts/device_server.py puts gibberish in this field for
