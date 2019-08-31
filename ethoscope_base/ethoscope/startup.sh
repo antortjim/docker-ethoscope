@@ -9,12 +9,13 @@
 #systemctl start mysqld.service
 #systemctl enable mysqld.service
 
-#USER_NAME=ethoscope
-#PASSWORD=ethoscope
-#mysql -u root -e "CREATE USER \"$USER_NAME\"@'localhost' IDENTIFIED BY \"$PASSWORD\""
-#mysql -u root -e "CREATE USER \"$USER_NAME\"@'%' IDENTIFIED BY \"$PASSWORD\""
-#mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO \"$USER_NAME\"@'localhost' WITH GRANT OPTION";
-#mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO \"$USER_NAME\"@'%' WITH GRANT OPTION";
+USER_NAME=ethoscope
+PASSWORD=ethoscope
+MYSQL_PORT=3306
+mysql -h mysqld -proot -P $MYSQL_PORT -u root -e "CREATE USER \"$USER_NAME\"@'localhost' IDENTIFIED BY \"$PASSWORD\""
+mysql -h mysqld -proot -P $MYSQL_PORT -u root -e "CREATE USER \"$USER_NAME\"@'%' IDENTIFIED BY \"$PASSWORD\""
+mysql -h mysqld -proot -P $MYSQL_PORT -u root -e "GRANT ALL PRIVILEGES ON *.* TO \"$USER_NAME\"@'localhost' WITH GRANT OPTION";
+mysql -h mysqld -proot -P $MYSQL_PORT -u root -e "GRANT ALL PRIVILEGES ON *.* TO \"$USER_NAME\"@'%' WITH GRANT OPTION";
 
 touch /etc/mysql/my.cnf
 #echo "innodb_buffer_pool_size = 128M" >> /etc/mysql/my.cnf

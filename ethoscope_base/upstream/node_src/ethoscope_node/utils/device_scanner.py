@@ -10,26 +10,6 @@ from functools import wraps
 import socket
 from zeroconf import ServiceBrowser, Zeroconf
 
-from systemd.journal import JournaldLogHandler
-
-# get an instance of the logger object this module will use
-logger = logging.getLogger(__name__)
-
-# instantiate the JournaldLogHandler to hook into systemd
-journald_handler = JournaldLogHandler()
-
-# set a formatter to include the level name
-journald_handler.setFormatter(logging.Formatter(
-    '[%(levelname)s] %(message)s'
-))
-
-# add the journald handler to the current logger
-logger.addHandler(journald_handler)
-
-# optionally set the logging level
-logger.setLevel(logging.DEBUG)
-
-
 
 class ScanException(Exception):
     pass
@@ -61,6 +41,10 @@ class Sensor(Thread):
     """
     """
     def __init__(self, ip, refresh_period = 5, port = 80, results_dir = ""):
+            docker_container = os.environ.get('DOCKER_CONTAINER', False)
+            if docker_container:
+                ip="mysqld"
+
         self._ip = ip
         self._port = port
         self._data_url = "http://%s:%i/" % (ip, port)
@@ -212,6 +196,9 @@ class Device(Thread):
         Initialises the info gathering and controlling activity of a Device by the node
         The server will interrogate the status of the device with frequency of refresh_period
         '''
+        docker_container = os.environ.get('DOCKER_CONTAINER', False)
+        if docker_container:
+            ip ="mysqld"
         
         self._results_dir = results_dir
         self._ip = ip
@@ -453,13 +440,8 @@ class Device(Thread):
             device_name = self._info["name"]
             com = "SELECT value from METADATA WHERE field = 'date_time'"
 
-            docker_container = os.environ.get('DOCKER_CONTAINER', False)
-            if docker_container:
-                host="mysqld"
-            else:
-                host = self._ip
 
-            mysql_db = mysql.connector.connect(host=host,
+            mysql_db = mysql.connector.connect(host=self._ip,
                                                connect_timeout=timeout,
                                                **self._ethoscope_db_credentials,
                                                buffered=True)

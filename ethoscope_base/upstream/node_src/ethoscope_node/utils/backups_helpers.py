@@ -16,12 +16,16 @@ class BackupClass(object):
             "user":"ethoscope",
             "password":"ethoscope"
         }
+    
     def __init__(self, device_info, results_dir):
 
         self._device_info = device_info
-        self._database_ip = os.path.basename(self._device_info["ip"])
+        docker_container = os.environ.get('DOCKER_CONTAINER', False)
+        if docker_container:
+            self._database_ip="mysqld"
+        else:
+           self._database_ip = os.path.basename(self._device_info["ip"])
         self._results_dir = results_dir
-
 
     def run(self):
         try:
@@ -31,12 +35,6 @@ class BackupClass(object):
             if self._device_info["backup_path"] is None:
                 raise ValueError("backup path is None for device %s" % self._device_info["id"])
             backup_path = os.path.join(self._results_dir, self._device_info["backup_path"])
-
-            docker_container = os.environ.get('DOCKER_CONTAINER', False)
-            if docker_container:
-                host="mysqld"
-            else:
-                host = self._database_ip
 
             mirror= MySQLdbToSQlite(backup_path, self._db_credentials["name"],
                             remote_host=self._database_ip,

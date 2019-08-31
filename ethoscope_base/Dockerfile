@@ -55,15 +55,16 @@ RUN pacman -S macchanger --noconfirm --needed
 RUN pip install zeroconf
 
 # Install systemd module to be able to easily log to syslog
-RUN pip install systemd
+#RUN pip install systemd
 
 
 #################################
 ## Download ethoscope software
 ##################################
 
-ARG UPSTREAM_GIT_REPO_HOST=upstream
-ARG UPSTREAM_GIT_REPO=/ethoscope_copy
+#ARG UPSTREAM_GIT_REPO_HOST=upstream
+#ARG UPSTREAM_GIT_REPO=/ethoscope_copy
+ARG UPSTREAM_GIT_REPO=https://gitlab.com/antortjim/ethoscope_upstream.git
 ARG UPDATER_LOCATION_IN_GIT=scripts/ethoscope_updater
 ARG LOCAL_BARE_PATH=/srv/git/ethoscope.git
 ARG TARGET_UPDATER_DIR=/opt/ethoscope_updater
@@ -74,10 +75,18 @@ ARG TARGET_GIT_INSTALL=/opt/ethoscope-git
 ## Any modifications to the software in $UPSTREAM_GIT_REPO_HOST
 ## are propagated to the images!
 
-COPY $UPSTREAM_GIT_REPO_HOST  $UPSTREAM_GIT_REPO
+#COPY $UPSTREAM_GIT_REPO_HOST  $UPSTREAM_GIT_REPO
 RUN mkdir -p /srv/git
 ## Clone the git repo in the /srv/git dir as bare
 RUN git clone --bare $UPSTREAM_GIT_REPO $LOCAL_BARE_PATH
+
+#ARG USER=antortjim
+#ARG REPO=ethoscope_upstream
+#ARG BRANCH=python3.7
+#ADD https://gitlab.com/api/v4/projects//$REPO/git/refs/heads/$BRANCH version.json
+#RUN git clone --bare -b$BRANCH https://gitlab.com/$USER/$REPO.git $LOCAL_BARE_PATH
+
+
 ## Clone from the bare repo to TARGET_GIT_INSTALL
 RUN git clone $LOCAL_BARE_PATH $TARGET_GIT_INSTALL
 
