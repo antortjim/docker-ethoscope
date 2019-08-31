@@ -32,6 +32,12 @@ class BackupClass(object):
                 raise ValueError("backup path is None for device %s" % self._device_info["id"])
             backup_path = os.path.join(self._results_dir, self._device_info["backup_path"])
 
+            docker_container = os.environ.get('DOCKER_CONTAINER', False)
+            if docker_container:
+                host="mysqld"
+            else:
+                host = self._database_ip
+
             mirror= MySQLdbToSQlite(backup_path, self._db_credentials["name"],
                             remote_host=self._database_ip,
                             remote_pass=self._db_credentials["password"],

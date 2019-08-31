@@ -453,7 +453,13 @@ class Device(Thread):
             device_name = self._info["name"]
             com = "SELECT value from METADATA WHERE field = 'date_time'"
 
-            mysql_db = mysql.connector.connect(host=self._ip,
+            docker_container = os.environ.get('DOCKER_CONTAINER', False)
+            if docker_container:
+                host="mysqld"
+            else:
+                host = self._ip
+
+            mysql_db = mysql.connector.connect(host=host,
                                                connect_timeout=timeout,
                                                **self._ethoscope_db_credentials,
                                                buffered=True)
