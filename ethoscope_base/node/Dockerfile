@@ -15,3 +15,6 @@ RUN cd /opt/ethoscope-git/node_src && pip install -e .
 # This script cannot be passed as ENTRYPOINT because systemd must be for the services to work
 COPY *.sh /root/
 RUN chmod +x /root/*.sh
+
+EXPOSE 80
+ENTRYPOINT ["/root/start_node.sh"]

@@ -8,8 +8,7 @@ echo "Creating ethoscope-net network"
 docker network create ethoscope-net
 
 echo "Running mysql container with user and password root and name mysqld"
-docker run --rm --name mysqld --net ethoscope-net -p 3000:3306 -e MYSQL_ROOT_PASSWORD="root" -d mysql 
-sleep 30
+docker run --rm --name mysqld --net ethoscope-net -d -p 3000:3306 -e MYSQL_ROOT_PASSWORD="root" mysql  && sleep 30
 
 #MYSQL_PORT=$(docker port mysqld 3306 | cut -f 2 -d:)
 #echo "mysql port is $MYSQL_PORT"
@@ -22,8 +21,7 @@ sleep 30
 
 echo "Running node container"
 #docker run -dP --rm  --net ethoscope-net --name node  node
-docker run -dP --rm  --net ethoscope-net --entrypoint /root/start_server.sh --expose 80 --name node_server  node
-docker run -dP --rm  --net ethoscope-net --entrypoint /root/start_backup.sh --name node_backup  node
+docker run -dP --rm  --net ethoscope-net --entrypoint /root/start_backup.sh --expose 80 --volume `pwd`/results:/ethoscope_data/results --name node  node
 
 
 echo "Running ethoscope container"

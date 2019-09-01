@@ -77,15 +77,19 @@ ARG TARGET_GIT_INSTALL=/opt/ethoscope-git
 
 #COPY $UPSTREAM_GIT_REPO_HOST  $UPSTREAM_GIT_REPO
 RUN mkdir -p /srv/git
-RUN sleep 0.3
-## Clone the git repo in the /srv/git dir as bare
-RUN git clone --bare $UPSTREAM_GIT_REPO $LOCAL_BARE_PATH
 
 #ARG USER=antortjim
 #ARG REPO=ethoscope_upstream
 #ARG BRANCH=python3.7
 #ADD https://gitlab.com/api/v4/projects//$REPO/git/refs/heads/$BRANCH version.json
 #RUN git clone --bare -b$BRANCH https://gitlab.com/$USER/$REPO.git $LOCAL_BARE_PATH
+
+## Clone the git repo in the /srv/git dir as bare
+## Trick to force Docker to always query Gitlab: http://dev.im-bot.com/docker-select-caching/
+## This is required in case there are updates in the repo
+ARG CACHEBUST=1
+RUN git clone --bare $UPSTREAM_GIT_REPO $LOCAL_BARE_PATH
+
 
 
 ## Clone from the bare repo to TARGET_GIT_INSTALL
@@ -95,29 +99,8 @@ RUN git clone $LOCAL_BARE_PATH $TARGET_GIT_INSTALL
 ## IMPORTANT this is if you want to work on a specific branch
 RUN cd $TARGET_GIT_INSTALL &&  git checkout python3.7 && git pull origin python3.7
 
-### we create a symbolic link of the updated in the proper location
-RUN ln -s $TARGET_GIT_INSTALL/scripts/ethoscope_updater $TARGET_UPDATER_DIR
-
-### Copy the node services
-#RUN cd $TARGET_GIT_INSTALL/scripts && cp ./ethoscope_node.service /etc/systemd/system/ethoscope_node.service && cp ./ethoscope_backup.service /etc/systemd/system/ethoscope_backup.service && cp ./ethoscope_video_backup.service /etc/systemd/system/ethoscope_video_backup.service
-#
-### Copy the device service
-#RUN cp $TARGET_GIT_INSTALL/scripts/ethoscope_device.service /etc/systemd/system/ethoscope_device.service
-#
-### Copy the node update service
-#RUN cd $TARGET_UPDATER_DIR && cp ethoscope_update_node.service /etc/systemd/system/ethoscope_update_node.service
-#
-### Copy the device update service
-#RUN cd $TARGET_GIT_INSTALL/$UPDATER_LOCATION_IN_GIT && cp ethoscope_update.service /etc/systemd/system/ethoscope_update.service
-#
-### Make sure the services refer to the source folder as ethoscope-git
-#RUN cd /etc/systemd/system && sed -i 's/ethoscope-node/ethoscope-git/' ethoscope_*.service && sed -i 's/ethoscope-device/ethoscope-git/' ethoscope_*.service
-
+## Define an environment variable available in all ethoscope containers
+## The definition will change the program's behavior to make it aware
+## of it running in a container
 ENV DOCKER_CONTAINER Yes
-
-
-#ENV init /lib/systemd/systemd
-#VOLUME [ "/sys/fs/cgroup" ]
-#ENTRYPOINT ["/lib/systemd/systemd"]
-ENTRYPOINT ["sleep", "6000"]
 
